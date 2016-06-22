@@ -140,3 +140,7 @@ if __name__ == '__main__':
     print('Units -----------------')
     for key in unit_dict:
         print('{0}: [{1}]'.format(key, unit_dict[key]))    
+
+    # This line allows you to simply double-click the function and see the
+    # results, without the window closing right away.
+    input('Hit any key to continue ...')
