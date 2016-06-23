@@ -15,6 +15,8 @@ BSD 3-clause (see https://www.w3.org/Consortium/Legal/2008/03-bsd-license.html)
 
 import numpy as np
 import pandas as pd
+from ClimateUtilities import integrator
+import phys
 
 def satvp_H2O(T, mode = 'general'):
     '''
@@ -192,9 +194,9 @@ class satvp:
         else:
             L = self.L
             
-        return satvp_simple(T, self.T0, self.e0, self.M, L)
+        return self.satvp_simple(T, self.T0, self.e0, self.M, L)
             
-    def satvp_simple(T, T0, e0, MolecularWeight, LatentHeat):
+    def satvp_simple(self, T, T0, e0, MolecularWeight, LatentHeat):
         ''' Saturation vapor pressure for any substance, computed using the
         simplified form of Clausius-Clapeyron assuming the perfect gas law and
         constant latent heat
@@ -212,9 +214,9 @@ class satvp:
             pressure : saturation vapor pressure [Pascal]
         '''
         
-        Rv = Rstar/MolecularWeight 
+        Rv = phys.Rstar/MolecularWeight 
         
-        return e0*math.exp(-(LatentHeat/Rv)*(1./T - 1./T0))
+        return e0 * np.exp( -(LatentHeat/Rv)*(1./T - 1./T0) )
 
             
 
@@ -291,8 +293,8 @@ class MoistAdiabat:
         def slope(logpa,logT):
             '''Set up derivative function for integrator '''
             
-            pa = math.exp(logpa)
-            T = math.exp(logT)
+            pa = np.exp(logpa)
+            T = np.exp(logT)
             qsat = self.eps*(self.satvp(T)/pa)
             num = (1. + (self.L/(self.Ra*T))*qsat)*self.Ra
             den = self.cpa + (self.cpc + (self.L/(self.Rc*T) - 1.)*(self.L/T))*qsat
@@ -300,8 +302,8 @@ class MoistAdiabat:
             return num/den
         
         self.slope = slope
-        self.ptop = 1000. #Default top of atmosphere
-        self.step = -.05 #Default step size for integration
+        self.ptop  = 1000. #Default top of atmosphere
+        self.step  = -.05 #Default step size for integration
         
     def __call__(self,ps,Ts,pgrid = None):
         
@@ -309,22 +311,23 @@ class MoistAdiabat:
         step = self.step  #Step size for integration
         ptop = self.ptop #Where to stop integratoin
         
-        logpa = math.log(ps)
-        logT = math.log(Ts)
+        logpa = np.log(ps)
+        logT = np.log(Ts)
         ad = integrator(self.slope,logpa,logT,step )
         
         #Initialize lists to save results
-        pL = [math.exp(logpa) + self.satvp(math.exp(logT))]
-        molarConL = [self.satvp(math.exp(logT))/pL[0]]
-        TL = [math.exp(logT)]
+        pL = [np.exp(logpa) + self.satvp(np.exp(logT))]
+        molarConL = [ self.satvp(np.exp(logT))/pL[0] ]
+        TL = [ np.exp(logT) ]
         
         #Integration loop
         p = 1.e30 #Dummy initial value, to get started
         while p > ptop:
-            ans = next(ad)
-            pa = math.exp(ans[0])
-            T = math.exp(ans[1])
-            p = pa+self.satvp(T)
+            ans = ad.next()
+            pa  = np.exp(ans[0])
+            T   = np.exp(ans[1])
+            p   = pa+self.satvp(T)
+            
             pL.append(p)
             molarConL.append(self.satvp(T)/p)
             TL.append(T)
@@ -333,11 +336,11 @@ class MoistAdiabat:
         TL = np.array(TL)
         molarConL = np.array(molarConL)
         
-        #Now compute mass specific concentration
+        # Now compute mass specific concentration
         Mc = self.condensible.MolecularWeight
         Mnc = self.noncon.MolecularWeight
-        Mbar = molarConL*Mc +(1.-molarConL)*Mnc
-        qL = (Mc/Mbar)*molarConL
+        Mbar = molarConL*Mc + (1.-molarConL)*Mnc
+        qL = (Mc/Mbar) * molarConL
         
         #The else clause below interpolates to a
         #specified pressure array pgrid, if desired.
@@ -348,12 +351,13 @@ class MoistAdiabat:
         if pgrid == None:
             return pL,TL,molarConL,qL
         else:
-            T1 = interp(pL,TL)
+            T1  = interp(pL,TL)
             mc1 = interp(pL,molarConL)
-            q1 = interp(pL,qL)
-            T = np.array([T1(pp) for pp in pgrid])
-            mc = np.array([mc1(pp) for pp in pgrid])
-            q = np.array([q1(pp) for pp in pgrid])
+            q1  = interp(pL,qL)
+            
+            T   = np.array([T1(pp) for pp in pgrid])
+            mc  = np.array([mc1(pp) for pp in pgrid])
+            q   = np.array([q1(pp) for pp in pgrid])
             
             return np.array(pgrid),T, mc, q            
 
@@ -361,7 +365,6 @@ if __name__ == '__main__':
     
     import matplotlib.pyplot as plt
     
-    '''
     # For handling units, I use the package "pint"
     # This is a bit of an overkill here, but "pint" is a cool package for
     # working with different units
@@ -386,7 +389,6 @@ if __name__ == '__main__':
         
     # Example of "satvp" -----------------------------    
     
-    '''
     # Example of "MoistAdiabat" -----------------------------    
     import gases
     
@@ -394,4 +396,10 @@ if __name__ == '__main__':
     air = gases.gas_props.loc['air']    
     
     ma = MoistAdiabat(condensible=water, noncon=air)    
-    p,T,molarCon,massCon = ma(1.e5,300.)
+    p, T, molarCon, massCon = ma(1.e5,300.)
+    
+    plt.semilogy(T,p)
+    plt.xlabel('Temperature [K]')        
+    plt.ylabel('Pressure [Pa]')    
+    plt.gca().invert_yaxis()
+    plt.show()

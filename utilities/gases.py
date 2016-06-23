@@ -23,6 +23,8 @@ ToDo
 import pandas as pd
 from io import StringIO
 
+import phys
+
 '''
 Attribues of gases
 ------------------
@@ -79,12 +81,11 @@ Attribues of gases
         Set to triple point value if available otherwise
         set to boiling point value
 
-    R : Gas constant for the individual gas. Computed from
-        other data as Rstar/MolecularWeight, when the update()
-        method is called [Currently not given]
+    R : Gas constant for the individual gas. Computed from the other data.
+        R = Rstar/MolecularWeight
         
-    Rcp : The adiabatic exponent R/cp. Computed from other
-        data when the update() method is called. [Currently not given]
+    Rcp : The adiabatic exponent. Computed from the other data.
+          Rcp = R/cp. 
 '''
 
 #----------Properties of gases-----------------
@@ -112,6 +113,10 @@ gas_props = pd.read_csv(StringIO(data_string), sep='[, ]+', engine='python', na_
 
 # Allow easy access to the data through the "formula"
 gas_props.index = gas_props['formula']
+
+# Calculate R and Rcp
+gas_props['R'] = phys.Rstar/gas_props.MolecularWeight
+gas_props['Rcp'] = gas_props.R / gas_props.cp
 
 # Create units dictionary
 units = ['K', 'Pa', 'K', 'Pa', 'J/kg', 'J/kg', 'J/kg', 'J/kg', 'kg/m**3', 'kg/m**3', 'kg/m**3', 'J/(kg K)', 'None', 'None', 'None', 'None', 'J/kg', 'kg/m**3']
