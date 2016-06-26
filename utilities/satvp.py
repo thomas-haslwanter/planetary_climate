@@ -15,8 +15,8 @@ BSD 3-clause (see https://www.w3.org/Consortium/Legal/2008/03-bsd-license.html)
 
 import numpy as np
 import pandas as pd
-from ClimateUtilities import integrator
 import phys
+from scipy.integrate import odeint
 
 def satvp_H2O(T, mode = 'general'):
     '''
@@ -127,8 +127,11 @@ class satvp:
     3589. Pa at a temperature of 300K, create the function using:
     
         T0 = 300.
-        e0 = 3589.
-        svp = satvp(T0, e0, MolecularWeight=18., LatentHeat=2.5e6)
+        p0 = 3589.
+        MolecularWeight = 18.
+        LatentHeat = 2.5e6
+        properties = (T0, p0, MolecularWeight, LatentHeat)
+        svp = satvp(properties)
     
     and afterward you can invoke it simply as "svp(T)", where T
     is whatever temperature you want to evaluate it for.
@@ -157,46 +160,43 @@ class satvp:
     will always use the latent heat of vaporization.
     '''
     
-    def __init__(self, Gas_or_T0, e0_or_iceFlag=None, MolecularWeight=None,
-                 LatentHeat=None):
+    def __init__(self, properties, iceFlag='switch'):
+        ''' Set the parameters of the object, so you can call it as a function 
+        afterwards.
+        If the parameters are passed as tuple, it has to have the following 
+        sequence:
+            - T0
+            - p0
+            - MolecularWeight
+            - LatentHeat
+        '''
         
         #Check if the first argument is a gas object. If not, assume
-        #that the arguments give T0, e0, etc. as numbers
-        self.iceFlag = e0_or_iceFlag
-        if isinstance(Gas_or_T0, pd.Series):
-            self.gas = Gas_or_T0
-            self.M = Gas_or_T0.MolecularWeight
-            self.T0 = Gas_or_T0.TriplePointT
-            self.e0 = Gas_or_T0.TriplePointP
+        #that the arguments give T0, p0, etc. as numbers
+        if isinstance(properties, pd.Series):
+            self.iceFlag = iceFlag
+            
+            self.T0  = properties.TriplePointT
+            self.p0  = properties.TriplePointP
+            self.M   = properties.MolecularWeight
+            self.gas = properties
             
             if self.iceFlag == 'ice':
-                self.L = Gas_or_T0.L_sublimation
+                self.L = properties.L_sublimation
             elif self.iceFlag == 'liquid':
-                self.L = Gas_or_T0.L_vaporization
+                self.L = properties.L_vaporization
             else:
                 self.iceFlag = 'switch'
                 
-            #self.M = Gas_or_T0.MolecularWeight
         else:
-            self.L = LatentHeat
-            self.M = MolecularWeight
-            self.T0 = Gas_or_T0
-            self.e0 = e0_or_iceFlag
+            self.iceFlag = None
+            
+            self.T0 = properties[0]
+            self.p0 = properties[1]
+            self.M  = properties[2]
+            self.L  = properties[3]
             
     def __call__(self, T):
-        
-        #Decide which latent heat to use
-        if self.iceFlag == 'switch':
-            if T < self.gas.TriplePointT:
-                L = self.gas.L_sublimation
-            else:
-                L = self.gas.L_vaporization
-        else:
-            L = self.L
-            
-        return self.satvp_simple(T, self.T0, self.e0, self.M, L)
-            
-    def satvp_simple(self, T, T0, e0, MolecularWeight, LatentHeat):
         ''' Saturation vapor pressure for any substance, computed using the
         simplified form of Clausius-Clapeyron assuming the perfect gas law and
         constant latent heat
@@ -204,78 +204,35 @@ class satvp:
         Parameters
         ----------
             T : Temperatur [Kelvin]
-            T0 :
-            e0 :
-            MolecularWeight : 
-            LatentHeat : 
         
         Returns
         -------
-            pressure : saturation vapor pressure [Pascal]
+            pressure : saturation vapor pressure [Pascal]        
         '''
         
-        Rv = phys.Rstar/MolecularWeight 
-        
-        return e0 * np.exp( -(LatentHeat/Rv)*(1./T - 1./T0) )
-
+        #Decide which latent heat to use
             
-
+        if self.iceFlag == 'switch':
+            if not type(T) == np.ndarray:
+                if T < self.gas.TriplePointT:
+                    L = self.gas.L_sublimation
+                else:
+                    L = self.gas.L_vaporization
+            else:
+                L = np.ones_like(T) * self.gas.L_sublimation
+                L[T>=self.gas.TriplePointT] = self.gas.L_vaporization
+        else:
+            L = self.L
+            
+        # Clausius-Clapeyron equation
+        Rv = phys.Rstar/self.M
+        p = self.p0 * np.exp( -(L/Rv)*(1./T - 1./self.T0) )
+        return p
 
 class MoistAdiabat:
-    '''
-    MoistAdiabat is a class which creates a callable object
-    used to compute the moist adiabat for a mixture consisting
-    of a condensible gas and a noncondensing gas.  The gases
-    are specified as gas objects. By default, the condensible
-    is water vapor and the noncondensible is modern Earth Air,
-    if the gases are not specified.
-
-    Usage:
-          To create a function m that computes the moist
-          adiabat for the gas Condensible mixed with the gas
-          Noncondensible, do
-                m = phys.MoistAdiabat(Condensible,Noncondensible)
-          For example, to do a mixture of condensible CO2 in
-          noncondensing N2, do
-                m = phys.MoistAdiabat(phys.CO2,phys.N2)
-          Once you have created the function, you give it
-          the surface partial pressure of the noncondensible
-          and the surface temperature when you call it, and it
-          returns arrays consisting of pressure, temperature,
-          molar concentration of the condensible, and mass
-          specific concentration of the condensible. For example:
-                p,T,molarCon,massCon = m(1.e5,300.)
-          for a surface noncondensible pressure of 1.e5 Pascal and
-          surface temperture of 300K.  The values returned
-          are arrays. The pressure returned is total pressure at
-          each level (condensible plus noncondensible).  By default,
-          the compution chooses the pressure values on which to return
-          the results.  For some purposes, you might want the results
-          specified on a list of pressures of your own choosing.  The
-          computation allows for this, by offering an interpolation
-          option which returns the result interpolated to a pressure
-          grid of your own choice, which is specified as an optional
-          third argument to the function. Thus, to get the
-          pressure values on a list consisting of [1000.,5000.,10000.] Pa,
-          you would do:
-                p,T,molarCon,massCon = m(1.e5,300.,[1000.,5000.,10000.])
-          The calculation is still done at high resolution to preserve
-          accuracy, but the results are afterward intepolated to the grid
-          you want using polynomial interpolation. For your convenience,
-          the pressure returned on the left hand side is a copy of
-          the pressure list you specified as input.
-          
-   **ToDo:
-      - Add help strings and documentation
-      - The way the help strings for gas objects are
-           set up makes the argument help box for the
-           creator useless.  Fix this somehow
-      - Add controls on resolution, top of atmosphere, etc.
-           Do we want this to return molar or mass concentration?
-           Maybe do both, but have result stored as an attribute
-    '''
     
     def __init__(self, condensible, noncon):
+        '''Set up the function parameters'''        
         self.condensible = condensible
         self.noncon = noncon
         
@@ -283,84 +240,55 @@ class MoistAdiabat:
         self.satvp = satvp(condensible)
         
         #Set up thermodynamic constants
-        self.eps = condensible.MolecularWeight/noncon.MolecularWeight
-        self.L = condensible.L_vaporization
-        self.Ra = noncon.R
-        self.Rc = condensible.R
-        self.cpa = noncon.cp
+        self.eps = condensible.MolecularWeight / noncon.MolecularWeight
+        self.L   = condensible.L_vaporization
+        self.Rc  = condensible.R
         self.cpc = condensible.cp
+        self.Ra  = noncon.R
+        self.cpa = noncon.cp
         
-        def slope(logpa,logT):
-            '''Set up derivative function for integrator '''
-            
-            pa = np.exp(logpa)
-            T = np.exp(logT)
-            qsat = self.eps*(self.satvp(T)/pa)
-            num = (1. + (self.L/(self.Ra*T))*qsat)*self.Ra
-            den = self.cpa + (self.cpc + (self.L/(self.Rc*T) - 1.)*(self.L/T))*qsat
-            
-            return num/den
+        self.ptop  = 100. #Default top of atmosphere
         
-        self.slope = slope
-        self.ptop  = 1000. #Default top of atmosphere
-        self.step  = -.05 #Default step size for integration
+    def slope(self, log_T, log_pa):
+        '''Derivative function defining the moist adiabat'''
         
-    def __call__(self,ps,Ts,pgrid = None):
+        pa = np.exp(log_pa)
+        T  = np.exp(log_T)
+        r_sat = self.eps * self.satvp(T)/pa
         
-        #Initial conditions
-        step = self.step  #Step size for integration
-        ptop = self.ptop #Where to stop integratoin
+        num = self.Ra * ( 1. + self.L*r_sat/(self.Ra*T) ) 
+        den = self.cpa + (self.cpc + (self.L/(self.Rc*T)-1.) *self.L/T )*r_sat
         
-        logpa = np.log(ps)
-        logT = np.log(Ts)
-        ad = integrator(self.slope,logpa,logT,step )
+        return num/den
         
-        #Initialize lists to save results
-        pL = [np.exp(logpa) + self.satvp(np.exp(logT))]
-        molarConL = [ self.satvp(np.exp(logT))/pL[0] ]
-        TL = [ np.exp(logT) ]
+    def __call__(self, p0, T0):
+        '''Call to the resulting function'''
         
-        #Integration loop
-        p = 1.e30 #Dummy initial value, to get started
-        while p > ptop:
-            ans = ad.next()
-            pa  = np.exp(ans[0])
-            T   = np.exp(ans[1])
-            p   = pa+self.satvp(T)
-            
-            pL.append(p)
-            molarConL.append(self.satvp(T)/p)
-            TL.append(T)
-                
-        pL = np.array(pL)
-        TL = np.array(TL)
-        molarConL = np.array(molarConL)
+        # Initial conditions
+        ln_p0, ln_T0 = np.log([p0, T0])
+        
+        p_air = np.logspace(np.log10(p0), np.log10(self.ptop), 101)
+        ln_p_air = np.log(p_air)
+        
+        # Solve the differntial equation
+        ln_T = odeint(self.slope, ln_T0, ln_p_air, full_output=True)
+        T = np.exp(ln_T[0].ravel())
+        
+        # Total pressure is p_air + p_condensible
+        p_c = self.satvp(T)
+        p_total = p_air + p_c
+    
+        molarConL = p_c/p_total
         
         # Now compute mass specific concentration
-        Mc = self.condensible.MolecularWeight
-        Mnc = self.noncon.MolecularWeight
-        Mbar = molarConL*Mc + (1.-molarConL)*Mnc
-        qL = (Mc/Mbar) * molarConL
+        M_c  = self.condensible.MolecularWeight
+        M_nc = self.noncon.MolecularWeight
         
-        #The else clause below interpolates to a
-        #specified pressure array pgrid, if desired.
-        # interp is a class defined in ClimateUtilities
-        #which creates a callable object which acts like
-        #an interpolation function for the listed data give
-        #as arguments.
-        if pgrid == None:
-            return pL,TL,molarConL,qL
-        else:
-            T1  = interp(pL,TL)
-            mc1 = interp(pL,molarConL)
-            q1  = interp(pL,qL)
-            
-            T   = np.array([T1(pp) for pp in pgrid])
-            mc  = np.array([mc1(pp) for pp in pgrid])
-            q   = np.array([q1(pp) for pp in pgrid])
-            
-            return np.array(pgrid),T, mc, q            
-
+        M_bar = molarConL*M_c + (1.-molarConL)*M_nc
+        qL = (M_c/M_bar) * molarConL
+        
+        return p_total, T, molarConL, qL
+    
 if __name__ == '__main__':
     
     import matplotlib.pyplot as plt
@@ -387,8 +315,6 @@ if __name__ == '__main__':
     plt.ylabel('Pressure [Pa]')
     plt.show()
         
-    # Example of "satvp" -----------------------------    
-    
     # Example of "MoistAdiabat" -----------------------------    
     import gases
     
@@ -397,9 +323,14 @@ if __name__ == '__main__':
     
     ma = MoistAdiabat(condensible=water, noncon=air)    
     p, T, molarCon, massCon = ma(1.e5,300.)
-    
-    plt.semilogy(T,p)
+
+    plt.hold(True)
+    plt.semilogy(T, p)
     plt.xlabel('Temperature [K]')        
     plt.ylabel('Pressure [Pa]')    
+    plt.title('Moist Adiabat')
     plt.gca().invert_yaxis()
-    plt.show()
+    plt.show()    
+
+    # Example of "satvp" -----------------------------    
+    # [To be done]

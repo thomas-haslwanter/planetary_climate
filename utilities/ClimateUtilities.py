@@ -3,29 +3,12 @@ Dependencies
 ------------
 numpy, matplotlib
 
-Change Log
-----------
-06/15/2016: cleaned up, and ported to Python 3 [ThH]                
-
 License
 -------
 BSD 3-clause (see https://www.w3.org/Consortium/Legal/2008/03-bsd-license.html)
 
 ToDo
 ----
-*Check for right column length in setitem and addCurve
-
-*Implement show,hide for curves (in X() and Y())
-
-*Implement missing data coding .
-     self.setMissingDataCode(code) (char or numeric)
-     possibly translate, check and force consistency
-     
-*Possibly handle missing data for plotting using a
- fill() or interp() method to fill in missing data using
- the interpolation routine. The best way to handle
- missing data in computations is by using Masked Arrays
-
 *Make and import a PathFinder module, which the instructor
  will customize for the site.  This module will help the
  students find locations of datasets and chapter scripts.
@@ -38,10 +21,9 @@ ToDo
 
 import string
 import numpy as np
-#import ClimateGraphicsMPL 
 
 #==============================================
-#---Section 2: Math utilities-------------------
+#---Section: Math utilities-------------------
 #==============================================
 
 class Dummy:
@@ -263,214 +245,6 @@ class romberg:
             
         return newval
         
-
-class integrator:
-    '''
-    Runge-Kutta ODE integrator, for 1D or multidimensional problems
-
-    Usage
-    -----
-
-    First you define a function that returns the
-    derivative(s), given the independent and dependent
-    variables as arguments. The independent variable (think
-    of time) is always a scalar. The dependent variable (think
-    of the x and y coordinates of a planet) can be either a scalar
-    or a 1D array, according to the problem. For the
-    multidimensional case, this integrator will work with any
-    kind of array that behaves like a Numeric array, i.e. supports
-    arithmetic operations. It will not work with plain Python lists.
-    The derivative function should return an array of derivatives, in
-    the multidimensional case. The derivative function can have any name.
-
-    The derivative function can optionally have a third argument, to provide
-    for passing parameters (e.g. the radius of the Earth) to the
-    function.  The "parameter" argument, if present, can be any Python
-    entity whatsoever. If you need to pass multiple constants, or
-    even tables or functions, to your derivative function, you can
-    stuff them all into a list or a Python object.
-
-
-    Example
-    -------
-    In the 1D case, to solve the equation
-                  dz/dt = -a*t*t/(1.+z*z)
-    in which z is the dependent variable and t is the
-    independent variable, your derivative function would  be
-    def g(t,z):
-       return -a*t*t/(1.+z*z)
-
-    treating the parameter a as a global, or perhaps
-    def g(t,z,params):
-       return -params.a*t*t/(params.b+z*z)
-
-    while in a 2D case, your function might look like:
-    def g(t,z):
-      return Numeric.array([-z[1],z[0]])
-
-    or perhaps something like:
-    def g(t,z):
-      return t*Numeric.sin(z)
-
-    or even
-    def g(t,z,params):
-      return Numeric.matrixmultiply(params(t),z)
-      
-    where params(t) in this case is a function returning
-    a Numeric square matrix of the right dimension to multiply z.
-
-    BIG WARNING:  Note that all the examples which return a
-    Numeric array return a NEW INSTANCE (i.e. copy) of an
-    array.  If you try to set up a global array and re-use
-    it to return your results from g, you will really be
-    just returning a REFERENCE to the same array each time,
-    and each call will change the value of all the previous
-    results. This will mess up the computation of intermediate
-    results in the Runge-Kutta step. An example of the sort of thing
-    that will NOT work is:
-    zprime = Numeric.zeros(2,Numeric.Float)
-    def g(t,z,params):
-      zprime[0] = z[1]
-      zprime[1] = -z[0]
-      return zprime
-    Try it out. This defines the harmonic oscillator, and a plot
-    of the orbit should give a circle. However, it doesn't  The problem
-    reference/value distinction.  The right way to define the function
-    would be
-    def g(t,z):
-      return Numeric.array([z[1],-z[0]])
-    Try this one. It should work properly now. Note that any arithmetic
-    performed on Numeric array objects returns a new instance of an Array
-    object. Hence, a function definition like 
-    def g(t,z):
-      return t*z*z+1.
-    will work fine.
-
-    Once you have defined the derivitave function, 
-    you then proceed as follows.
-
-    First c reate an integrator instance:
-    int_g = integrator(g,0.,start,.01)
-
-    where "0." in the argument list is the initial value
-    for the independent variable, "start" is the initial
-    value for the dependent variable, and ".01" is the
-    step size. You then use the integrator as follows:
-
-    int_g.setParams(myParams)
-    while int_g.x < 500:
-       print int_g.next()
-
-    The call to setParams is optional. Just use it if your
-    function makes use of a parameter object. The next() method
-    accepts the integration increment (e.g. dx) as an optional
-    argument. This is in case you want to change the step size,
-    which you can do at any time.  The integrator continues
-    using the most recent step size it knows.
-
-    Each call to int_g.next returns a list, the first of whose
-    elements is the new value of the independent variable, and
-    the second of whose elements is a scalar or array giving
-    the value of the dependent variable(s) at the incremented
-    independent variable. 
-    
-    **ToDo:
-         * Implement a reset() method which resets to initial conditions.
-            Useful for doing problem over multiple times with different
-            parameters.
-            
-         * Referring to the independent variable as 'x' is awful, and
-           confusing in many contexts.  Introduce a variable name
-           dictonary with default names like 'independent' and 'dependent'
-           (and short synonyms) so if fi is the integrator object
-           fi['indep'] is the current value of the independent variable
-           and fi['dep'] is the current (vector) value of the dependent
-           variable. Then allow user to rename or synonym these to
-           the actual user-supplied names.  This is an alternative
-           to using the list returned by fi.next(). Then expunge
-           all references to things like fi.x from the examples and
-           chapter scripts. They are too confusing.  Similarly,
-           change the name of the increment from dx to something else
-           
-         * Similarly, we could introduce a dictionary of some sort
-           to make it easier to set up multidimensional systems and
-           refer to the different vector components by name
-           (e.g. refer to v[0] at T, v[1] as dTdy , etc. )
-           
-         * Make the integrator object callable. The call can return
-           a list of results for all the intermediate steps, or optionally
-           just the final value.  
-
-    '''
-
-    def __init__(self, derivs,xstart,ystart,dx=None):
-        self.derivsin = derivs
-        #
-        #The following block checks to see if the derivs
-        #function has a parameter argument specified, and
-        #writes a new function with a dummy parameter argument
-        #appended if necessary. This allows the user to leave
-        #out the parameter argument from the function definition,
-        #if it isn't needed.
-        nargs = derivs.__code__.co_argcount
-        if nargs == 3:
-            self.derivs = derivs
-        elif nargs == 2:
-            def derivs1(x,y,param):
-                return self.derivsin(x,y)
-            self.derivs = derivs1
-        else:
-            name = derivs.__name__
-            print('Error: %s has wrong number of arguments'%name)
-        #
-        self.x = xstart
-        #The next statement is a cheap trick to initialize
-        #y with a copy of ystart, which works whether y is
-        #a regular scalar or a Numeric array.  
-        self.y = 0.+ ystart
-        self.dx = dx #Can instead be set with the first call to next()
-        self.params = None
-
-    def setParams(self,params):
-        '''
-        Sets the parameters for the integrator (optional).
-        The argument can be any Python entity at all. It is
-        up to the user to make sure the derivative function can
-        make use of it.
-        '''
-
-        self.params = params
-
-    def next(self,dx = None):
-        '''
-        Computes next step.  Optionally, takes the increment
-        in the independent variable as an argument.  The
-        increment can be changed at any time, and the most
-        recently used value is remembered, as a default
-        **ToDo:  
-           Store the previous solution for use as the next guess(?)
-           Handle arithmetic exceptions in the iteration loop
-        '''
-
-        if not (dx == None):
-            self.dx = dx
-            
-        h = self.dx
-        hh=h*0.5;
-        h6=h/6.0;
-        xh=self.x+hh;
-        dydx = self.derivs(self.x,self.y,self.params)
-        yt = self.y+hh*dydx
-        dyt = self.derivs(xh,yt,self.params)
-        yt =self.y+hh*dyt
-        dym = self.derivs(xh,yt,self.params)
-        yt =self.y+h*dym
-        dym += dyt
-        dyt = self.derivs(self.x+h,yt,self.params)
-        self.y += h6*(dydx+dyt+2.0*dym)
-        self.x += h
-        return self.x,self.y
-
 class newtSolve:
     '''
     Newton method solver for function of 1 variable
