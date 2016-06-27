@@ -5,7 +5,8 @@ All units are mks units
 
 Change Log
 ----------
-06/15/2016: cleaned up, and ported to Python 3 [ThH]                
+2016/06/15: cleaned up, and ported to Python 3 [ThH]                
+2016/06/26: rewrote "moistAdiabat", eliminating the "integrator [ThH]
 
 License
 -------
