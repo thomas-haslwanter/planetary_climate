@@ -1,31 +1,12 @@
 '''
-Physical properties of gases
+Physical properties of gases.
 
 All units are mks units.
+The data are approximate mean values for "normal" temperatures and pressures,
+suitable only for rough calculations.
+
 This one replaces the section on gases in the old module "phys.py"
 
-Change Log
-----------
-06/19/2016 : created, based on "phys.py" [ThH]                
-
-License
--------
-BSD 3-clause (see https://www.w3.org/Consortium/Legal/2008/03-bsd-license.html)
-
-ToDo
-----
-* Finish putting data into the gas database, perhaps including Van der Waals,
-  Shomate and Antoine coefficients, at least in selected cases
-* Provide R and Rcp values
-
-'''
-
-import pandas as pd
-from io import StringIO
-
-import phys
-
-'''
 Attribues of gases
 ------------------
     CriticalPointT :  Critical point temperature [K]
@@ -86,12 +67,24 @@ Attribues of gases
         
     Rcp : The adiabatic exponent. Computed from the other data.
           Rcp = R/cp. 
+          
+License
+-------
+BSD 3-clause (see https://www.w3.org/Consortium/Legal/2008/03-bsd-license.html)
+
+ToDo
+----
+* Finish putting data into the gas database, perhaps including Van der Waals,
+  Shomate and Antoine coefficients, at least in selected cases
+
 '''
 
+import pandas as pd
+from io import StringIO
+
+import phys
+
 #----------Properties of gases-----------------
-#The following are approximate mean values
-#for "normal" temperatures and pressures, suitable only
-#for rough calculations.
 
 # These data could be also placed into an external file. For simplicity,
 # I keep them here, and use "io.StringIO" to treat the long string as a file.
@@ -109,13 +102,14 @@ CriticalPointT, CriticalPointP, TriplePointT, TriplePointP, L_vaporization_Boili
 None,        None,        None,        None,        None,        None,        None,        None,        None,        None,        None,        1004.,       1.4003,       28.97,    Earth_Air,      air,   None,       None
 """
 
+# Read in the data from the string
 gas_props = pd.read_csv(StringIO(data_string), sep='[, ]+', engine='python', na_values='None')
 
 # Allow easy access to the data through the "formula"
 gas_props.index = gas_props['formula']
 
 # Calculate R and Rcp
-gas_props['R'] = phys.Rstar/gas_props.MolecularWeight
+gas_props['R'] = phys.Rstar / gas_props.MolecularWeight
 gas_props['Rcp'] = gas_props.R / gas_props.cp
 
 # Create units dictionary

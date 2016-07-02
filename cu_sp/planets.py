@@ -3,12 +3,35 @@ Planetary database
 Source for planetary data, and some of the data on
 the moons, is http://nssdc.gsfc.nasa.gov/planetary/factsheet/
 
-Change Log
-----------
-06/15/2016: cleaned up, license added [ThH]                
-06/22/2016: converted "planet" objects to pandas DataFrames
-            added usage examples[ThH]
+A "planet" contains basic planetary data:
 
+- name .........Name of the planet
+- a ........... Mean radius of planet [m]
+- g ........... Surface gravitational acceleration [m/s**2]
+- L ........... Annual mean solar constant (current) [W/m**2]
+- albedo.... ...Bond albedo (fraction)
+- mass ........ Mass of the planet [kg]
+- rsm ......... Semi-major axis of orbit about Sun [m]
+- year ........ Sidereal length of year [sec]
+- eccentricity  Eccentricity [unitless]
+- day ......... Mean tropical length of day [sec]
+- obliquity ... Obliquity to orbit [degrees]
+- Lequinox .... Longitude of equinox [degrees]
+- Tsbar ....... Mean surface temperature [K]
+- Tsmax ....... Maximum surface temperature [K]
+- Tsmin ....... Minimum surface temperature [K]
+- Type ........ [planet/none/moon]
+- Around ...... Center of orbit
+
+For gas giants, "surface" quantities are given at the 1 bar level
+
+Todo
+----
+- Why do we have an entry "Lequinox", when no values are given?
+- "Moon" is the only one where "Tsmin" is given
+-  check Triton: obliquity to ecliptic;
+                seasons are influenced by the inclination
+                of Triton's orbit? (About 20 deg to Neptune's equator)
 License
 -------
 BSD 3-clause (see https://www.w3.org/Consortium/Legal/2008/03-bsd-license.html)
@@ -18,33 +41,11 @@ import pandas as pd
 from io import StringIO
 
 '''
-A "planet" contains basic planetary data:
-    name .........Name of the planet
-    a ........... Mean radius of planet [m]
-	g ........... Surface gravitational acceleration [m/s**2]
-	L ........... Annual mean solar constant (current) [W/m**2]
-	albedo.... ...Bond albedo (fraction)
-	mass ........ Mass of the planet [kg]
-	rsm ......... Semi-major axis of orbit about Sun [m]
-	year ........ Sidereal length of year [sec]
-	eccentricity  Eccentricity [unitless]
-	day ......... Mean tropical length of day [sec]
-	obliquity ... Obliquity to orbit [degrees]
-	Lequinox .... Longitude of equinox [degrees]
-	Tsbar ....... Mean surface temperature [K]
-	Tsmax ....... Maximum surface temperature [K]
-	Tsmin ....... Minimum surface temperature [K]
-    Type ........ [planet/none/moon]
-    Around ...... Center of orbit
-
-For gas giants, "surface" quantities are given at the 1 bar level
-'''
-
-'''
 For the table:
     - "mass" is given in multiples of earth-mass
     - "day" is given in [h]
     - "years" is give in earth-days
+    - for planets, the "rsm", "year", "L" and "eccentricity" are the same as for the corresponding planet.
 and the units are afterwards converted to SI
 '''
 
@@ -64,19 +65,7 @@ Titan,  2.575e6,    1.35,   0.21,   14.90,  0.0225, 1433.0e9,   10759.0,    0.05
 Europa, 1.560e6,    1.31,   0.67,   50.5,   0.008,  778.57e9,   4332.0,     0.0489,         3.551,      3.13,       None,       103.0,  125.0,  None,   moon,   Jupiter
 Triton, 1.3534e6,   0.78,   0.76,   1.51,   0.00359,4495.06e9,  60189.0,    0.0113,         5.877,      156.0,      None,       34.5,   None,   None,   moon,   Neptune """
 
-'''
-Notes
------
-- For planets, the "rsm", "year", "L" and "eccentricity" are the same as for the corresponding planet.
-- "Moon" is the only one where "Tsmin" is given
-
-Todo
-----
-- Why do we have an entry "Lequinox", when no values are given?
--  check Triton: obliquity to ecliptic;
-                seasons are influenced by the inclination
-                of Triton's orbit? (About 20 deg to Neptune's equator)
-'''
+# Read in the data from that string
 planet_props = pd.read_csv(StringIO(data_string), sep='[, ]+', engine='python', na_values='None')
 
 # Allow easy access to the data through the "formula"

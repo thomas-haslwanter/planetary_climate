@@ -1,12 +1,5 @@
 '''
-Functions to calculate saturation vapor pressure
-
-All units are mks units
-
-Change Log
-----------
-2016/06/15: cleaned up, and ported to Python 3 [ThH]                
-2016/06/26: rewrote "moistAdiabat", eliminating the "integrator [ThH]
+Functions to calculate saturation vapor pressure.
 
 License
 -------
@@ -24,6 +17,7 @@ def satvp_H2O(T, mode = 'general'):
     Saturation vapor pressure (SVP) computation used in the GFDL climate model. 
     
     See smithsonian meteorological tables page 350.
+    
     Original source: GFDL climate model, circa 1995
     
     Parameters
@@ -31,12 +25,12 @@ def satvp_H2O(T, mode = 'general'):
         T : Temperatur [Kelvin]
         
         type : string
-            'general' ... blends over from "water" saturation ( T_Celsius>0 )
+            - 'general' ... blends over from "water" saturation ( T_Celsius>0 )
                          to "ice" saturation ( T_Celsius<-20 ) as the temperature
                          falls below 0C.
-            'water' ... SVP over liquid water
-            'heymsfield' ... alternate formula for SVP over liquid water
-            'ice' ..... SVP over liquid ice, valid between -153C and 0C
+            - 'water' ... SVP over liquid water
+            - 'heymsfield' ... alternate formula for SVP over liquid water
+            - 'ice' ..... SVP over liquid ice, valid between -153C and 0C
 
     
     Returns
@@ -117,7 +111,7 @@ class satvp:
     a simplified form of Clausius-Clapeyron. The use of the function is
     simplified, by setting up an object that stores the thermodynamic data
     needed, so it doesn't have to be re-entered each time. 
-    Because of the __call__ method, once the object is created, it can be
+    Because of the `__call__` method, once the object is created, it can be
     invoked like a regular function.
     
     Examples
@@ -127,12 +121,13 @@ class satvp:
     2.5e6 J/kg, a molecular weight of 18 and has vapor pressure
     3589. Pa at a temperature of 300K, create the function using:
     
-        T0 = 300.
-        p0 = 3589.
-        MolecularWeight = 18.
-        LatentHeat = 2.5e6
-        properties = (T0, p0, MolecularWeight, LatentHeat)
-        svp = satvp(properties)
+    
+    >>> T0 = 300.
+    >>> p0 = 3589.
+    >>> MolecularWeight = 18.
+    >>> LatentHeat = 2.5e6
+    >>> properties = (T0, p0, MolecularWeight, LatentHeat)
+    >>> svp = satvp(properties)
     
     and afterward you can invoke it simply as "svp(T)", where T
     is whatever temperature you want to evaluate it for.
@@ -140,8 +135,8 @@ class satvp:
     Alternately, satvp can be called with a gas object
     as the first argument, e.g.
     
-        from gases import gas_props
-        svp = satvps(gas_props.loc['CO2'])
+    >>> from gases import gas_props
+    >>> svp = satvps(gas_props.loc['CO2'])
     
     If no other arguments are given, the latent heat of sublimation
     will be used when "svp(T)" is called for temperatures below the triple
@@ -151,12 +146,12 @@ class satvp:
     an optional second argument when the first argument is a gas
     object.  Thus,
     
-        svp = satvps(gas_props.loc['CO2'], 'ice')
+    >>> svp = satvps(gas_props.loc['CO2'], 'ice')
         
     will always use the latent heat of sublimation, regardless of T,
     while
     
-        svp = satvps(gas_props.loc['CO2'], 'liquid')
+    >>> svp = satvps(gas_props.loc['CO2'], 'liquid')
         
     will always use the latent heat of vaporization.
     '''
@@ -164,8 +159,10 @@ class satvp:
     def __init__(self, properties, iceFlag='switch'):
         ''' Set the parameters of the object, so you can call it as a function 
         afterwards.
+        
         If the parameters are passed as tuple, it has to have the following 
         sequence:
+        
             - T0
             - p0
             - MolecularWeight
@@ -199,7 +196,7 @@ class satvp:
             
     def __call__(self, T):
         ''' Saturation vapor pressure for any substance, computed using the
-        simplified form of Clausius-Clapeyron assuming the perfect gas law and
+        simplified form of *Clausius-Clapeyron* assuming the perfect gas law and
         constant latent heat
         
         Parameters
@@ -231,6 +228,55 @@ class satvp:
         return p
 
 class MoistAdiabat:
+    '''
+    MoistAdiabat is a class which creates a callable object
+    used to compute the moist adiabat for a mixture consisting
+    of a condensible gas and a noncondensing gas.  The gases
+    are specified as gas objects. By default, the condensible
+    is water vapor and the noncondensible is modern Earth Air,
+    if the gases are not specified.
+
+    Usage:
+          To create a function m that computes the moist
+          adiabat for the gas Condensible mixed with the gas
+          Noncondensible, do
+          
+          >>> m = phys.MoistAdiabat(Condensible,Noncondensible)
+                
+          For example, to do a mixture of condensible CO2 in
+          noncondensing N2, do
+          
+          >>> m = phys.MoistAdiabat(phys.CO2,phys.N2)
+          
+          Once you have created the function, you give it
+          the surface partial pressure of the noncondensible
+          and the surface temperature when you call it, and it
+          returns arrays consisting of pressure, temperature,
+          molar concentration of the condensible, and mass
+          specific concentration of the condensible. For example:
+                p,T,molarCon,massCon = m(1.e5,300.)
+          for a surface noncondensible pressure of 1.e5 Pascal and
+          surface temperture of 300K.  The values returned
+          are arrays. The pressure returned is total pressure at
+          each level (condensible plus noncondensible).  By default,
+          the compution chooses the pressure values on which to return
+          the results.  For some purposes, you might want the results
+          specified on a list of pressures of your own choosing.  The
+          computation allows for this, by offering an interpolation
+          option which returns the result interpolated to a pressure
+          grid of your own choice, which is specified as an optional
+          third argument to the function. Thus, to get the
+          pressure values on a list consisting of [1000.,5000.,10000.] Pa,
+          you would do:
+          
+          >>> p,T,molarCon,massCon = m(1.e5,300.,[1000.,5000.,10000.])
+          
+          The calculation is still done at high resolution to preserve
+          accuracy, but the results are afterward intepolated to the grid
+          you want using polynomial interpolation. For your convenience,
+          the pressure returned on the left hand side is a copy of
+          the pressure list you specified as input.
+    '''
     
     def __init__(self, condensible, noncon):
         '''Set up the function parameters'''        

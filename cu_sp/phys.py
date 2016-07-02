@@ -1,10 +1,6 @@
 '''
 - Physical constants
-
-Change Log
-----------
-2016/06/15: cleaned up, and ported to Python 3 [ThH]                
-2016/06/22: eliminated code which has been moved to "gases.py" and "satvp.py" [ThH]
+- Plank function
 
 License
 -------
@@ -22,17 +18,21 @@ sigma = constants.sigma #Stefan-Boltzman constant
 G     = constants.G     #Gravitational constant
 
 #-----------Thermodynamic constants------------
-#Following will come out in J/(deg kmol), so
-#that dividing Rstar by molecular weight gives
-#gas constant appropriate for mks units
+# Following will come out in J/(deg kmol), so that dividing Rstar by molecular
+# weight gives gas constant appropriate for mks units
 
 N_avogadro = constants.Avogadro  #Avogadro's number
-
 Rstar = 1000.*k*N_avogadro   #Universal gas constant
 
 #----------------Radiation related functions-------------
 def B(nu,T):
-    '''Planck function (of frequency) '''
+    '''Planck function (of frequency)
+    
+    .. math::
+        B(\\nu, T) = \\frac{2 k^3 T^3}{h^2 c^2} \\frac{u^3}{e^u -1}
+    
+    '''
+
     
     u = min(h*nu/(k*T),500.) #To prevent overflow
     return (2.*h*nu**3/c**2)/(np.exp(u)-1.)    
