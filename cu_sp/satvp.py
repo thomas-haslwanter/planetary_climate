@@ -236,46 +236,50 @@ class MoistAdiabat:
     is water vapor and the noncondensible is modern Earth Air,
     if the gases are not specified.
 
-    Usage:
-          To create a function m that computes the moist
-          adiabat for the gas Condensible mixed with the gas
-          Noncondensible, do
-          
-          >>> m = phys.MoistAdiabat(Condensible,Noncondensible)
-                
-          For example, to do a mixture of condensible CO2 in
-          noncondensing N2, do
-          
-          >>> m = phys.MoistAdiabat(phys.CO2,phys.N2)
-          
-          Once you have created the function, you give it
-          the surface partial pressure of the noncondensible
-          and the surface temperature when you call it, and it
-          returns arrays consisting of pressure, temperature,
-          molar concentration of the condensible, and mass
-          specific concentration of the condensible. For example:
-                p,T,molarCon,massCon = m(1.e5,300.)
-          for a surface noncondensible pressure of 1.e5 Pascal and
-          surface temperture of 300K.  The values returned
-          are arrays. The pressure returned is total pressure at
-          each level (condensible plus noncondensible).  By default,
-          the compution chooses the pressure values on which to return
-          the results.  For some purposes, you might want the results
-          specified on a list of pressures of your own choosing.  The
-          computation allows for this, by offering an interpolation
-          option which returns the result interpolated to a pressure
-          grid of your own choice, which is specified as an optional
-          third argument to the function. Thus, to get the
-          pressure values on a list consisting of [1000.,5000.,10000.] Pa,
-          you would do:
-          
-          >>> p,T,molarCon,massCon = m(1.e5,300.,[1000.,5000.,10000.])
-          
-          The calculation is still done at high resolution to preserve
-          accuracy, but the results are afterward intepolated to the grid
-          you want using polynomial interpolation. For your convenience,
-          the pressure returned on the left hand side is a copy of
-          the pressure list you specified as input.
+    Examples
+    --------
+
+    To create a function m that computes the moist
+    adiabat for the gas Condensible mixed with the gas
+    Noncondensible, do
+
+    >>> m = phys.MoistAdiabat(Condensible,Noncondensible)
+        
+    For example, to do a mixture of condensible CO2 in
+    noncondensing N2, do
+
+    >>> m = phys.MoistAdiabat(phys.CO2,phys.N2)
+
+    Once you have created the function, you give it
+    the surface partial pressure of the noncondensible
+    and the surface temperature when you call it, and it
+    returns arrays consisting of pressure, temperature,
+    molar concentration of the condensible, and mass
+    specific concentration of the condensible. For example:
+
+    >>> p,T,molarCon,massCon = m(1.e5,300.)
+
+    for a surface noncondensible pressure of 1.e5 Pascal and
+    surface temperture of 300K.  The values returned
+    are arrays. The pressure returned is total pressure at
+    each level (condensible plus noncondensible).  By default,
+    the compution chooses the pressure values on which to return
+    the results.  For some purposes, you might want the results
+    specified on a list of pressures of your own choosing.  The
+    computation allows for this, by offering an interpolation
+    option which returns the result interpolated to a pressure
+    grid of your own choice, which is specified as an optional
+    third argument to the function. Thus, to get the
+    pressure values on a list consisting of [1000.,5000.,10000.] Pa,
+    you would do:
+
+    >>> p,T,molarCon,massCon = m(1.e5,300.,[1000.,5000.,10000.])
+
+    The calculation is still done at high resolution to preserve
+    accuracy, but the results are afterward intepolated to the grid
+    you want using polynomial interpolation. For your convenience,
+    the pressure returned on the left hand side is a copy of
+    the pressure list you specified as input.
     '''
     
     def __init__(self, condensible, noncon):

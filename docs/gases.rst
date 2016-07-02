@@ -5,6 +5,8 @@ gases
 
 Physical properties of gases
 
+:mod: :download:`..\\cu_sp\\gases.py`
+
 .. toctree::
    :maxdepth: 2
 

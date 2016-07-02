@@ -1,56 +1,56 @@
 '''
-----------------------------------------------------------------------
 This utility sets up the python configuration files so as to
 allow Python to find files in a specified directory, regardless
 of what directory the user is working from.  This is typically
 used to create a directory where the user will put resources shared
 by many Python scripts, such as courseware modules
 
-----------------------------------------------------------------------
-Usage:
-   (1) Put a copy of this file (setpath.py) in the directory
-       you want to share
+Usage
+-----
+* Put a copy of this file (setpath.py) in the directory you want to share
+
+* Execute setpath.py, either by opening it and running it
+  in Canopy, or from the command line by changing director
+  to the directory you want to share and then typing
+
+  >>> python setup.py
+
+  If you run it by opening it in the Canopy editor you need to
+  select the directory popup menu item that tells Canopy to
+  change the working directory to the Editor directory.
+  in Canopy, the working directory always appears at the upper
+  right corner of the Python interpreter window. 
  
-   (2) Execute setpath.py, either by opening it and running it
-       in Canopy, or from the command line by changing director
-       to the directory you want to share and then typing
-                       python setup.py
-       If you run it by opening it in the Canopy editor you need to
-       select the directory popup menu item that tells Canopy to
-       change the working directory to the Editor directory.
-       in Canopy, the working directory always appears at the upper
-       right corner of the Python interpreter window. 
+Notes
+-----
  
- ----------------------------------------------------------------------
- Notes:
- 
-   This will create a startup file which will properly 
-   initialize ipython (whether used directly or via Enthought
-   Canopy) to find your files, and will do that regardless
-   of your operating system.
- 
-   If you are using a Linux or Mac OSX operating system, it
-   will also edit your .cshrc and .bash_profile shell startup
-   scripts to set the environment variable PYTHONPATH so that
-   any version of the python interperter started from the 
-   command line (i.e. whether ipython or python) will find
-   the shared files.  This feature will not work on
-   Windows operating systems, so Windows users should start
-   either start up python by clicking on the Canopy app, or
-   by starting ipython from the command line. It is possible
-   to set the PYTHONPATH environment variable in Windows,
-   but this script does not yet implement that feature. 
- 
-   Note that it is also possible to manually set up a temporary
-   shared path (for example /home/MyModules) in a given script 
-   by executing the lines:
- 
-   import sys
-   sys.path.append('home/MyModules')
- 
-   where you would replace '/home/MyModules') with the
-   actual full path to the directory you want on your own
-   system
+This will create a startup file which will properly 
+initialize ipython (whether used directly or via Enthought
+Canopy) to find your files, and will do that regardless
+of your operating system.
+
+If you are using a Linux or Mac OSX operating system, it
+will also edit your .cshrc and .bash_profile shell startup
+scripts to set the environment variable PYTHONPATH so that
+any version of the python interperter started from the 
+command line (i.e. whether ipython or python) will find
+the shared files.  This feature will not work on
+Windows operating systems, so Windows users should start
+either start up python by clicking on the Canopy app, or
+by starting ipython from the command line. It is possible
+to set the PYTHONPATH environment variable in Windows,
+but this script does not yet implement that feature. 
+
+Note that it is also possible to manually set up a temporary
+shared path (for example /home/MyModules) in a given script 
+by executing the lines:
+
+    >>> import sys
+    >>> sys.path.append('home/MyModules')
+
+where you would replace '/home/MyModules') with the
+actual full path to the directory you want on your own
+system
 '''
 
 import os

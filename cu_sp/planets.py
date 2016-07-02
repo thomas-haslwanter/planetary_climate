@@ -27,11 +27,13 @@ For gas giants, "surface" quantities are given at the 1 bar level
 
 Todo
 ----
+
 - Why do we have an entry "Lequinox", when no values are given?
 - "Moon" is the only one where "Tsmin" is given
 -  check Triton: obliquity to ecliptic;
                 seasons are influenced by the inclination
                 of Triton's orbit? (About 20 deg to Neptune's equator)
+
 License
 -------
 BSD 3-clause (see https://www.w3.org/Consortium/Legal/2008/03-bsd-license.html)
