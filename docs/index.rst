@@ -1,10 +1,9 @@
 Principles of Planetary Climate - Documentation
 ===============================================
 
-Python functions and utilities for easy calculations of climat-related
-simulations
+*Python 3* utilities for the book `Principles of Planetary Climate <https://geosci.uchicago.edu/~rtp1/PrinciplesPlanetaryClimate/>`_, by Raymond T. Pierrehumbert
 
-For Python 3
+
 It is hosted under https://github.com/thomas-haslwanter/planetary_climate, and contains the following folders:
 
 *ClimateUtilities*  Analysis routines for climate simulations
