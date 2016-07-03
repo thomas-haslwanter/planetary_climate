@@ -84,40 +84,55 @@ from io import StringIO
 
 import phys
 
-#----------Properties of gases-----------------
+def get_properties():
+    '''Properties of gases
+    
+    Returns
+    -------
+        gas_props : pandas DataFrame
+                    contains important properties of the gases
+                    indexed by gas-name
+        unit_dict : Dictionary
+                    Contains the corresponding (mks) units of the properties
+    '''
 
-# These data could be also placed into an external file. For simplicity,
-# I keep them here, and use "io.StringIO" to treat the long string as a file.
-
-data_string="""
-CriticalPointT, CriticalPointP, TriplePointT, TriplePointP, L_vaporization_BoilingPoint, L_vaporization_TriplePoint, L_fusion, L_sublimation, rho_liquid_BoilingPoint, rho_liquid_TriplePoint, rho_solid, cp, gamma, MolecularWeight, name, formula, L_vaporization, rho_liquid
-6.4710e2,    2.2100e7,    2.7315e2,    6.1100e2,    2.2550e6,    2.4930e6,    3.3400e5,    2.8400e6,    9.5840e2,    9.9987e2,    9.1700e2,    1.8470e3,    1.3310,    1.8000e1,    Water,          H2O,   2.4930e6,   9.9987e2
-1.9044e2,    4.5960e6,    9.0670e1,    1.1700e4,    5.1000e5,    5.3600e5,    5.8680e4,    5.9500e5,    4.5020e2,    None,        5.0930e2,    2.1950e3,    1.3050,    1.6000e1,    Methane,        CH4,   5.3600e5,   4.5020e2
-3.0420e2,    7.3825e6,    2.1654e2,    5.1850e5,    None,        3.9700e5,    1.9600e5,    5.9300e5,    1.0320e3,    1.1100e3,    1.5620e3,    8.2000e2,    1.2940,    4.4000e1,    Carbon_Dioxide, CO2,   3.9700e5,   1.1100e3
-1.2620e2,    3.4000e6,    6.3140e1,    1.2530e4,    1.9800e5,    2.1800e5,    2.5730e4,    2.4370e5,    8.0860e2,    None,        1.0260e3,    1.0370e3,    1.4030,    2.8000e1,    Nitrogen,       N2,    2.1800e5,   8.0860e2
-1.5454e2,    5.0430e6,    5.4300e1,    1.5000e2,    2.1300e5,    2.4200e5,    1.3900e4,    2.5600e5,    1.1410e3,    1.3070e3,    1.3510e3,    9.1600e2,    1.3930,    3.2000e1,    Oxygen,         O2,    2.4200e5,   1.3070e3
-3.3200e1,    1.2980e6,    1.3950e1,    7.2000e3,    4.5400e5,    None,        5.8200e4,    None,        7.0970e1,    None,        8.8000e1,    1.4230e4,    1.3840,      2.0000,    Hydrogen,       H2,    4.5400e5,   7.0970e1
-5.1000,      2.2800e5,    2.1700,      5.0700e3,    2.0300e4,    None,        None,        None,        1.2496e2,    None,        2.0000e2,    5.1960e3,    1.6640,      4.0000,    Helium,         He,    2.0300e4,   1.2496e2
-4.0550e2,    1.1280e7,    1.9540e2,    6.1000e3,    1.3710e6,    1.6580e6,    3.3140e5,    1.9890e6,    6.8200e2,    7.3420e2,    8.2260e2,    2.0600e3,    1.3090,    1.7000e1,    Ammonia,        NH3,   1.6580e6,   7.3420e2
-None,        None,        None,        None,        None,        None,        None,        None,        None,        None,        None,        1004.,       1.4003,       28.97,    Earth_Air,      air,   None,       None
-"""
-
-# Read in the data from the string
-gas_props = pd.read_csv(StringIO(data_string), sep='[, ]+', engine='python', na_values='None')
-
-# Allow easy access to the data through the "formula"
-gas_props.index = gas_props['formula']
-
-# Calculate R and Rcp
-gas_props['R'] = phys.Rstar / gas_props.MolecularWeight
-gas_props['Rcp'] = gas_props.R / gas_props.cp
-
-# Create units dictionary
-units = ['K', 'Pa', 'K', 'Pa', 'J/kg', 'J/kg', 'J/kg', 'J/kg', 'kg/m**3', 'kg/m**3', 'kg/m**3', 'J/(kg K)', 'None', 'None', 'None', 'None', 'J/kg', 'kg/m**3']
-unit_dict = dict(zip(gas_props.columns, units))
+    # These data could be also placed into an external file. For simplicity,
+    # I keep them here, and use "io.StringIO" to treat the long string as a file.
+    data_string="""
+    CriticalPointT, CriticalPointP, TriplePointT, TriplePointP, L_vaporization_BoilingPoint, L_vaporization_TriplePoint, L_fusion, L_sublimation, rho_liquid_BoilingPoint, rho_liquid_TriplePoint, rho_solid, cp, gamma, MolecularWeight, name, formula, L_vaporization, rho_liquid
+    6.4710e2,    2.2100e7,    2.7315e2,    6.1100e2,    2.2550e6,    2.4930e6,    3.3400e5,    2.8400e6,    9.5840e2,    9.9987e2,    9.1700e2,    1.8470e3,    1.3310,    1.8000e1,    Water,          H2O,   2.4930e6,   9.9987e2
+    1.9044e2,    4.5960e6,    9.0670e1,    1.1700e4,    5.1000e5,    5.3600e5,    5.8680e4,    5.9500e5,    4.5020e2,    None,        5.0930e2,    2.1950e3,    1.3050,    1.6000e1,    Methane,        CH4,   5.3600e5,   4.5020e2
+    3.0420e2,    7.3825e6,    2.1654e2,    5.1850e5,    None,        3.9700e5,    1.9600e5,    5.9300e5,    1.0320e3,    1.1100e3,    1.5620e3,    8.2000e2,    1.2940,    4.4000e1,    Carbon_Dioxide, CO2,   3.9700e5,   1.1100e3
+    1.2620e2,    3.4000e6,    6.3140e1,    1.2530e4,    1.9800e5,    2.1800e5,    2.5730e4,    2.4370e5,    8.0860e2,    None,        1.0260e3,    1.0370e3,    1.4030,    2.8000e1,    Nitrogen,       N2,    2.1800e5,   8.0860e2
+    1.5454e2,    5.0430e6,    5.4300e1,    1.5000e2,    2.1300e5,    2.4200e5,    1.3900e4,    2.5600e5,    1.1410e3,    1.3070e3,    1.3510e3,    9.1600e2,    1.3930,    3.2000e1,    Oxygen,         O2,    2.4200e5,   1.3070e3
+    3.3200e1,    1.2980e6,    1.3950e1,    7.2000e3,    4.5400e5,    None,        5.8200e4,    None,        7.0970e1,    None,        8.8000e1,    1.4230e4,    1.3840,      2.0000,    Hydrogen,       H2,    4.5400e5,   7.0970e1
+    5.1000,      2.2800e5,    2.1700,      5.0700e3,    2.0300e4,    None,        None,        None,        1.2496e2,    None,        2.0000e2,    5.1960e3,    1.6640,      4.0000,    Helium,         He,    2.0300e4,   1.2496e2
+    4.0550e2,    1.1280e7,    1.9540e2,    6.1000e3,    1.3710e6,    1.6580e6,    3.3140e5,    1.9890e6,    6.8200e2,    7.3420e2,    8.2260e2,    2.0600e3,    1.3090,    1.7000e1,    Ammonia,        NH3,   1.6580e6,   7.3420e2
+    None,        None,        None,        None,        None,        None,        None,        None,        None,        None,        None,        1004.,       1.4003,       28.97,    Earth_Air,      air,   None,       None
+    """
+    
+    # Read in the data from the string
+    props = pd.read_csv(StringIO(data_string), sep='[, ]+', engine='python', na_values='None')
+    
+    # Allow easy access to the data through the "formula"
+    props.index = props['formula']
+    
+    # Calculate R and Rcp
+    props['R'] = phys.Rstar / props.MolecularWeight
+    props['Rcp'] = props.R / props.cp
+    
+    # Create units dictionary
+    units = ['K', 'Pa', 'K', 'Pa', 'J/kg', 'J/kg', 'J/kg', 'J/kg', 'kg/m**3', 'kg/m**3', 'kg/m**3', 'J/(kg K)', 'None', 'None', 'None', 'None', 'J/kg', 'kg/m**3']
+    unit_dict = dict(zip(props.columns, units))
+    
+    return props, unit_dict
     
 if __name__ == '__main__':
-    # A few examples of how to access the gas-properties
+    
+    # Get properties and units
+    gas_props, units = get_properties()
+    
+    # A few examples of how to access the gas-properties ------
     
     # List of properties stored
     print('The following informations are stored: -------')    
@@ -137,8 +152,8 @@ if __name__ == '__main__':
     
     # Show the units    
     print('Units -----------------')
-    for key in unit_dict:
-        print('{0}: [{1}]'.format(key, unit_dict[key]))    
+    for key in units:
+        print('{0}: [{1}]'.format(key, units[key]))    
 
     # This line allows you to simply double-click the function and see the
     # results, without the window closing right away.

@@ -39,7 +39,7 @@ def satvp_H2O(T, mode = 'general'):
     '''
     
     # Make sure that user does not use the function with Celsius
-    if np.any(T<=0):
+    if np.any(np.array(T)<=0):
         print('Inputs to "satvp_H2O" are in [Kelvin], and have to be >0!')
         raise ValueError
     
@@ -70,7 +70,8 @@ def satvp_H2O(T, mode = 'general'):
         return es_ice * 0.1  #Convert to Pascals
         
     elif mode == 'general':
-        T_Celsius = T - 273.16
+        T = np.atleast_1d(T)
+        T_Celsius = np.array(T - 273.16)
         
         # Write the function such that it also works with arrays
         svp_out = np.nan * np.ones_like(T)
@@ -88,6 +89,9 @@ def satvp_H2O(T, mode = 'general'):
                 T_Celsius[medium]/20 * \
                    (satvp_H2O(T[medium],'water') - satvp_H2O(T[medium],'ice'))
         
+        if len(svp_out) == 1:
+            svp_out = svp_out[0]
+            
         return svp_out
     
     elif mode == 'heymsfield':
@@ -369,8 +373,9 @@ if __name__ == '__main__':
     # Example of "MoistAdiabat" -----------------------------    
     import gases
     
-    water = gases.gas_props.loc['H2O']        
-    air = gases.gas_props.loc['air']    
+    gas_properties, units = gases.get_properties()
+    water = gas_properties.loc['H2O']        
+    air = gas_properties.loc['air']    
     
     ma = MoistAdiabat(condensible=water, noncon=air)    
     p, T, molarCon, massCon = ma(1.e5,300.)
