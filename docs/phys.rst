@@ -6,7 +6,7 @@ phys
 Functions
 ---------
 
-* :func:`phy.B` ... Planck function
+* :func:`phys.B` ... Planck function
 
 
 .. toctree::

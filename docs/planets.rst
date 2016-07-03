@@ -5,7 +5,10 @@ planets
 
 Physical properties of planets, and of some moons
 
-:mod: :download:`..\\cu_sp\\planets.py`
+Functions
+---------
+
+* :func:`planets.get_properties` ... physical properties of planets
 
 .. toctree::
    :maxdepth: 2

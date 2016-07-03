@@ -47,6 +47,20 @@ def B(nu,T):
     .. math::
         B(\\nu, T) = \\frac{2 k^3 T^3}{h^2 c^2} \\frac{u^3}{e^u -1}
     
+    Example
+    -------
+    >>> import matplotlib.pyplot as plt
+    >>>  
+    >>> nu = np.linspace(1e12, 1e14, 1001)
+    >>> T = 300
+    >>> blackbody_radiation = B(nu, T)
+    >>>
+    >>> plt.plot(nu, blackbody_radiation)
+    >>> plt.xlabel(r'$\\nu [Hz]$')
+    >>> plt.ylabel(r'$B(\\nu)$')
+    >>> plt.title('Blackbody Radiation')
+    >>> plt.show()
+
     '''
 
     u = h*nu/(k*T)

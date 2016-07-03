@@ -5,8 +5,6 @@ All units are mks units.
 The data are approximate mean values for "normal" temperatures and pressures,
 suitable only for rough calculations.
 
-This one replaces the section on gases in the old module "phys.py"
-
 Attribues of gases
 ------------------
     CriticalPointT :  Critical point temperature [K]
@@ -94,6 +92,11 @@ def get_properties():
                     indexed by gas-name
         unit_dict : Dictionary
                     Contains the corresponding (mks) units of the properties
+                    
+    Example
+    -------
+    >>> properties, units = gases.get_properties()
+
     '''
 
     # These data could be also placed into an external file. For simplicity,

@@ -53,15 +53,22 @@ def get_properties():
                 
         unit_dict: Dictionary
                Contains the corresponding (mks) units of the properties
-                    
+
+    Example
+    -------
+    >>> properties, units = planets.get_properties()
+
     Notes
     -----
         For the table:
+
             - "mass" is given in multiples of earth-mass
             - "day" is given in [h]
             - "years" is give in earth-days
             - for planets, the "rsm", "year", "L" and "eccentricity" are the same as for the corresponding planet.
+
         and the units are afterwards converted to SI
+
     '''
     
     data_string="""
